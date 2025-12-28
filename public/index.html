@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Рыбалка Онлайн</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #1a5276 0%, #0e2f44 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        /* МЕНЮ */
+        .menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #87CEEB 0%, #4682B4 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .menu.hidden {
+            display: none;
+        }
+
+        .menu h1 {
+            font-size: 72px;
+            color: #fff;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+
+        .menu h2 {
+            font-size: 28px;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 40px;
+        }
+
+        .menu-box {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .menu input {
+            width: 300px;
+            padding: 15px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+            outline: none;
+        }
+
+        .menu button {
+            width: 300px;
+            padding: 18px;
+            font-size: 22px;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 20px rgba(46, 204, 113, 0.4);
+        }
+
+        .menu button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.6);
+        }
+
+        .online-count {
+            margin-top: 20px;
+            color: rgba(255,255,255,0.7);
+            font-size: 16px;
+        }
+
+        /* ИГРА */
+        .game {
+            display: none;
+            width: 100%;
+            height: 100vh;
+        }
+
+        .game.active {
+            display: block;
+        }
+
+        #pond {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        /* HUD */
+        .hud {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .hud-box {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            padding: 10px 15px;
+            border-radius: 12px;
+            color: white;
+        }
+
+        .hud-box h4 {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-bottom: 2px;
+        }
+
+        .hud-box p {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* Список игроков */
+        .players-list {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            padding: 12px;
+            border-radius: 12px;
+            color: white;
+            min-width: 150px;
+            max-width: 200px;
+        }
+
+        .players-list h3 {
+            font-size: 13px;
+            margin-bottom: 8px;
+            opacity: 0.8;
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0;
+            font-size: 12px;
+        }
+
+        .player-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .player-item.you {
+            font-weight: bold;
+        }
+
+        /* Таблица лидеров */
+        .leaderboard {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            padding: 12px;
+            border-radius: 12px;
+            color: white;
+            min-width: 180px;
+        }
+
+        .leaderboard h3 {
+            font-size: 13px;
+            margin-bottom: 8px;
+            text-align: center;
+            color: #f1c40f;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+
+        .leaderboard-rank {
+            width: 20px;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+
+        .leaderboard-item:nth-child(1) .leaderboard-rank { color: #ffd700; }
+        .leaderboard-item:nth-child(2) .leaderboard-rank { color: #c0c0c0; }
+        .leaderboard-item:nth-child(3) .leaderboard-rank { color: #cd7f32; }
+
+        /* Лента событий */
+        .feed {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 280px;
+        }
+
+        .feed-item {
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-top: 6px;
+            font-size: 13px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Сообщение */
+        .catch-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 25px 40px;
+            border-radius: 20px;
+            font-size: 24px;
+            z-index: 50;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .catch-popup.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .catch-popup .fish-emoji {
+            font-size: 50px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        /* МИНИ-ИГРА */
+        .minigame {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 80;
+        }
+
+        .minigame.active {
+            display: flex;
+        }
+
+        .minigame-title {
+            color: #f1c40f;
+            font-size: 28px;
+            margin-bottom: 10px;
+            animation: pulse 0.5s ease infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        .minigame-timer {
+            width: 300px;
+            height: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .minigame-timer-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #f1c40f, #e74c3c);
+            transition: width 0.1s linear;
+        }
+
+        .minigame-progress {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .minigame-progress-bar {
+            width: 250px;
+            height: 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .minigame-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            transition: width 0.2s ease;
+            width: 0%;
+        }
+
+        /* Кнопка для ПК */
+        .minigame-key {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(180deg, #3498db 0%, #2980b9 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 6px 0 #1a5276, 0 10px 20px rgba(0,0,0,0.3);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .minigame-key.pressed {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #1a5276, 0 5px 10px rgba(0,0,0,0.3);
+        }
+
+        .minigame-key.correct {
+            background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%);
+            box-shadow: 0 6px 0 #1e8449, 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .minigame-key.wrong {
+            background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
+            box-shadow: 0 6px 0 #922b21, 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        /* Кнопки для мобильных */
+        .minigame-mobile-buttons {
+            display: none;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 350px;
+        }
+
+        .minigame-mobile-btn {
+            width: 140px;
+            height: 80px;
+            background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
+            border: none;
+            border-radius: 15px;
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #922b21, 0 8px 15px rgba(0,0,0,0.3);
+            transition: transform 0.1s, box-shadow 0.1s;
+            user-select: none;
+        }
+
+        .minigame-mobile-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #922b21, 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .minigame-mobile-btn.highlight {
+            background: linear-gradient(180deg, #f1c40f 0%, #f39c12 100%);
+            box-shadow: 0 5px 0 #d68910, 0 8px 15px rgba(0,0,0,0.3);
+            animation: btnPulse 0.3s ease infinite alternate;
+        }
+
+        @keyframes btnPulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        /* Адаптив для мобильных */
+        @media (max-width: 600px) {
+            .menu h1 { font-size: 48px; }
+            .menu h2 { font-size: 20px; }
+            .menu input, .menu button { width: 250px; }
+
+            .hud { top: 10px; left: 10px; gap: 5px; }
+            .hud-box { padding: 8px 10px; }
+            .hud-box p { font-size: 14px; }
+
+            .players-list { top: 10px; right: 10px; padding: 8px; min-width: 120px; }
+            .leaderboard { bottom: 10px; right: 10px; padding: 8px; min-width: 150px; }
+            .feed { bottom: 80px; left: 10px; width: 200px; }
+
+            .minigame-key { display: none; }
+            .minigame-mobile-buttons { display: flex; }
+        }
+
+        @media (min-width: 601px) {
+            .minigame-mobile-buttons { display: none; }
+        }
+
+        /* Подсказка */
+        .hint {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            color: rgba(255,255,255,0.8);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .hint { bottom: 150px; font-size: 12px; padding: 8px 15px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- МЕНЮ -->
+    <div class="menu" id="menu">
+        <h1>🎣</h1>
+        <h2>Рыбалка Онлайн</h2>
+        <div class="menu-box">
+            <input type="text" id="playerName" placeholder="Введи своё имя..." maxlength="15">
+            <br>
+            <button id="playBtn">Играть</button>
+        </div>
+        <p class="online-count">Игроков онлайн: <span id="onlineCount">0</span></p>
+    </div>
+
+    <!-- ИГРА -->
+    <div class="game" id="game">
+        <canvas id="pond"></canvas>
+
+        <div class="hud">
+            <div class="hud-box">
+                <h4>Поймано</h4>
+                <p id="fishCount">0</p>
+            </div>
+            <div class="hud-box">
+                <h4>Вес</h4>
+                <p id="totalWeight">0 кг</p>
+            </div>
+        </div>
+
+        <div class="players-list" id="playersList">
+            <h3>👥 Игроки</h3>
+            <div id="playersContainer"></div>
+        </div>
+
+        <div class="leaderboard" id="leaderboard">
+            <h3>🏆 Лучший улов</h3>
+            <div id="leaderboardContainer">
+                <div style="opacity: 0.5; font-size: 12px; text-align: center;">Пока пусто</div>
+            </div>
+        </div>
+
+        <div class="feed" id="feed"></div>
+
+        <div class="catch-popup" id="catchPopup">
+            <span class="fish-emoji" id="popupEmoji">🐟</span>
+            <span id="popupText">Карась 0.5 кг</span>
+        </div>
+
+        <div class="hint" id="hint">Кликни на воду чтобы забросить удочку</div>
+    </div>
+
+    <!-- МИНИ-ИГРА -->
+    <div class="minigame" id="minigame">
+        <div class="minigame-title" id="minigameTitle">🐟 Клюёт!</div>
+
+        <div class="minigame-timer">
+            <div class="minigame-timer-bar" id="timerBar"></div>
+        </div>
+
+        <div class="minigame-progress">
+            <span id="progressText">Тяни рыбу!</span>
+            <div class="minigame-progress-bar">
+                <div class="minigame-progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <!-- Для ПК - буква -->
+        <div class="minigame-key" id="minigameKey">W</div>
+
+        <!-- Для мобильных - кнопки -->
+        <div class="minigame-mobile-buttons" id="mobileButtons">
+            <button class="minigame-mobile-btn" data-btn="1">ЖМИ!</button>
+            <button class="minigame-mobile-btn" data-btn="2">ЖМИ!</button>
+            <button class="minigame-mobile-btn" data-btn="3">ЖМИ!</button>
+            <button class="minigame-mobile-btn" data-btn="4">ЖМИ!</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Элементы
+        const menu = document.getElementById('menu');
+        const game = document.getElementById('game');
+        const playerNameInput = document.getElementById('playerName');
+        const playBtn = document.getElementById('playBtn');
+        const onlineCount = document.getElementById('onlineCount');
+        const canvas = document.getElementById('pond');
+        const ctx = canvas.getContext('2d');
+        const fishCountEl = document.getElementById('fishCount');
+        const totalWeightEl = document.getElementById('totalWeight');
+        const playersContainer = document.getElementById('playersContainer');
+        const leaderboardContainer = document.getElementById('leaderboardContainer');
+        const feed = document.getElementById('feed');
+        const catchPopup = document.getElementById('catchPopup');
+        const popupEmoji = document.getElementById('popupEmoji');
+        const popupText = document.getElementById('popupText');
+        const hint = document.getElementById('hint');
+
+        // Мини-игра
+        const minigame = document.getElementById('minigame');
+        const minigameTitle = document.getElementById('minigameTitle');
+        const timerBar = document.getElementById('timerBar');
+        const progressText = document.getElementById('progressText');
+        const progressFill = document.getElementById('progressFill');
+        const minigameKey = document.getElementById('minigameKey');
+        const mobileButtons = document.getElementById('mobileButtons');
+
+        // Socket
+        const socket = io();
+
+        // Состояние
+        let myPlayer = null;
+        let players = new Map();
+        let isFishing = false;
+        let isMinigameActive = false;
+        let bobberX = 0;
+        let bobberY = 0;
+        let waves = [];
+        let bubbles = [];
+        let fishInWater = [];
+        let pendingFish = null;
+
+        // Мини-игра состояние
+        let minigameProgress = 0;
+        let minigameTimer = 0;
+        let minigameInterval = null;
+        let currentKey = '';
+        let currentButton = 0;
+        const keys = ['W', 'A', 'S', 'D'];
+
+        // Определяем мобильное устройство
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 601;
+
+        // Виды рыб
+        const fishTypes = [
+            { name: 'Карась', emoji: '🐟', minWeight: 0.1, maxWeight: 0.5, rarity: 0.35, difficulty: 3 },
+            { name: 'Окунь', emoji: '🐠', minWeight: 0.2, maxWeight: 0.8, rarity: 0.25, difficulty: 4 },
+            { name: 'Щука', emoji: '🐡', minWeight: 0.5, maxWeight: 3.0, rarity: 0.15, difficulty: 6 },
+            { name: 'Сом', emoji: '🐋', minWeight: 2.0, maxWeight: 10.0, rarity: 0.08, difficulty: 8 },
+            { name: 'Лещ', emoji: '🐟', minWeight: 0.3, maxWeight: 1.5, rarity: 0.12, difficulty: 5 },
+            { name: 'Золотая рыбка', emoji: '✨', minWeight: 0.1, maxWeight: 0.2, rarity: 0.03, difficulty: 10 },
+            { name: 'Старый ботинок', emoji: '👢', minWeight: 0.5, maxWeight: 0.5, rarity: 0.02, difficulty: 1 }
+        ];
+
+        let stats = { fishCount: 0, totalWeight: 0 };
+
+        // Размер canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Инициализация волн
+        for (let i = 0; i < 8; i++) {
+            waves.push({ offset: Math.random() * Math.PI * 2, speed: 0.01 + Math.random() * 0.02, y: i * 100 });
+        }
+
+        // Рыбки в воде
+        function addFishToWater() {
+            for (let i = 0; i < 8; i++) {
+                fishInWater.push({
+                    x: Math.random() * canvas.width,
+                    y: 150 + Math.random() * (canvas.height - 250),
+                    emoji: ['🐟', '🐠'][Math.floor(Math.random() * 2)],
+                    size: 20 + Math.random() * 20,
+                    speedX: (Math.random() - 0.5) * 1.5
+                });
+            }
+        }
+
+        // Отрисовка
+        function draw() {
+            // Фон
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#1a5276');
+            gradient.addColorStop(0.5, '#154360');
+            gradient.addColorStop(1, '#0e2f44');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Волны
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 2;
+            waves.forEach(wave => {
+                ctx.beginPath();
+                for (let x = 0; x < canvas.width; x += 5) {
+                    const waveY = wave.y + Math.sin(x * 0.015 + wave.offset) * 15;
+                    if (x === 0) ctx.moveTo(x, waveY);
+                    else ctx.lineTo(x, waveY);
+                }
+                ctx.stroke();
+                wave.offset += wave.speed;
+            });
+
+            // Рыбки
+            fishInWater.forEach(fish => {
+                ctx.font = `${fish.size}px Arial`;
+                ctx.save();
+                if (fish.speedX < 0) {
+                    ctx.scale(-1, 1);
+                    ctx.fillText(fish.emoji, -fish.x - fish.size, fish.y);
+                } else {
+                    ctx.fillText(fish.emoji, fish.x, fish.y);
+                }
+                ctx.restore();
+
+                fish.x += fish.speedX;
+                if (fish.x > canvas.width + 50) fish.x = -50;
+                if (fish.x < -50) fish.x = canvas.width + 50;
+            });
+
+            // Пузырьки
+            bubbles.forEach((bubble, i) => {
+                ctx.beginPath();
+                ctx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255,255,255,${bubble.opacity})`;
+                ctx.fill();
+                bubble.y -= bubble.speed;
+                bubble.opacity -= 0.008;
+                if (bubble.opacity <= 0) bubbles.splice(i, 1);
+            });
+
+            // Поплавки других игроков
+            players.forEach((player, id) => {
+                if (id !== socket.id && player.isFishing) {
+                    drawBobber(player.x, player.y, player.color, player.name);
+                }
+            });
+
+            // Мой поплавок
+            if (isFishing) {
+                drawBobber(bobberX, bobberY, myPlayer.color, null, true);
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        function drawBobber(x, y, color, name, isMe = false) {
+            const bobY = y + Math.sin(Date.now() * 0.005) * 3;
+
+            // Леска
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, bobY - 15);
+            ctx.stroke();
+
+            // Круги на воде
+            ctx.strokeStyle = `rgba(255,255,255,0.1)`;
+            ctx.beginPath();
+            ctx.ellipse(x, bobY + 5, 25, 8, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Поплавок
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.ellipse(x, bobY, 8, 14, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.ellipse(x, bobY - 10, 6, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Имя
+            if (name) {
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(name, x, bobY - 30);
+            }
+
+            // Пузырьки
+            if (isMe && Math.random() < 0.03) {
+                bubbles.push({
+                    x: x + (Math.random() - 0.5) * 30,
+                    y: bobY + 15,
+                    size: 2 + Math.random() * 4,
+                    speed: 0.5 + Math.random(),
+                    opacity: 0.5
+                });
+            }
+        }
+
+        // Поймать рыбу (выбор)
+        function selectFish() {
+            const rand = Math.random();
+            if (rand < 0.15) return null;
+
+            const adjustedRand = (rand - 0.15) / 0.85;
+            let cumulative = 0;
+
+            for (const fish of fishTypes) {
+                cumulative += fish.rarity;
+                if (adjustedRand < cumulative) {
+                    const weight = fish.minWeight + Math.random() * (fish.maxWeight - fish.minWeight);
+                    return { ...fish, weight: Math.round(weight * 100) / 100 };
+                }
+            }
+            return fishTypes[0];
+        }
+
+        // Показать popup
+        function showPopup(emoji, text) {
+            popupEmoji.textContent = emoji;
+            popupText.textContent = text;
+            catchPopup.classList.add('show');
+            setTimeout(() => catchPopup.classList.remove('show'), 2000);
+        }
+
+        // Добавить в ленту
+        function addFeedItem(text) {
+            const item = document.createElement('div');
+            item.className = 'feed-item';
+            item.textContent = text;
+            feed.appendChild(item);
+
+            if (feed.children.length > 5) {
+                feed.removeChild(feed.firstChild);
+            }
+
+            setTimeout(() => {
+                if (item.parentNode) item.remove();
+            }, 5000);
+        }
+
+        // Обновить список игроков
+        function updatePlayersList() {
+            playersContainer.innerHTML = '';
+            players.forEach((player, id) => {
+                const div = document.createElement('div');
+                div.className = 'player-item' + (id === socket.id ? ' you' : '');
+                div.innerHTML = `
+                    <span class="player-dot" style="background: ${player.color}"></span>
+                    <span>${player.name}${id === socket.id ? ' (ты)' : ''}</span>
+                    <span style="margin-left: auto; opacity: 0.6">${player.fishCount}</span>
+                `;
+                playersContainer.appendChild(div);
+            });
+            onlineCount.textContent = players.size;
+        }
+
+        // Обновить таблицу лидеров
+        function updateLeaderboard(leaderboard) {
+            if (!leaderboard || leaderboard.length === 0) {
+                leaderboardContainer.innerHTML = '<div style="opacity: 0.5; font-size: 12px; text-align: center;">Пока пусто</div>';
+                return;
+            }
+
+            leaderboardContainer.innerHTML = leaderboard.slice(0, 5).map((entry, i) => `
+                <div class="leaderboard-item">
+                    <span class="leaderboard-rank">${i + 1}</span>
+                    <span>${entry.emoji}</span>
+                    <span style="flex: 1; overflow: hidden; text-overflow: ellipsis;">${entry.name}</span>
+                    <span style="font-weight: bold;">${entry.weight} кг</span>
+                </div>
+            `).join('');
+        }
+
+        // Обновить статистику
+        function updateStats() {
+            fishCountEl.textContent = stats.fishCount;
+            totalWeightEl.textContent = stats.totalWeight.toFixed(1) + ' кг';
+        }
+
+        // ========== МИНИ-ИГРА ==========
+
+        function startMinigame(fish) {
+            pendingFish = fish;
+            isMinigameActive = true;
+            minigameProgress = 0;
+            minigameTimer = 100;
+            correctPresses = 0;
+
+            minigameTitle.textContent = `${fish.emoji} ${fish.name} клюёт!`;
+            progressFill.style.width = '0%';
+            timerBar.style.width = '100%';
+
+            minigame.classList.add('active');
+            hint.style.display = 'none';
+
+            socket.emit('pulling');
+
+            if (isMobile) {
+                // Мобильная версия - случайная подсветка кнопок
+                nextMobileButton();
+            } else {
+                // ПК версия - случайные буквы
+                nextKey();
+            }
+
+            // Таймер (медленнее)
+            minigameInterval = setInterval(() => {
+                minigameTimer -= 0.8;
+                timerBar.style.width = minigameTimer + '%';
+
+                if (minigameTimer <= 0) {
+                    endMinigame(false);
+                }
+            }, 100);
+        }
+
+        function nextKey() {
+            currentKey = keys[Math.floor(Math.random() * keys.length)];
+            minigameKey.textContent = currentKey;
+            minigameKey.className = 'minigame-key';
+        }
+
+        function nextMobileButton() {
+            // Убираем подсветку со всех
+            document.querySelectorAll('.minigame-mobile-btn').forEach(btn => {
+                btn.classList.remove('highlight');
+            });
+
+            // Подсвечиваем случайную
+            currentButton = Math.floor(Math.random() * 4) + 1;
+            const btn = document.querySelector(`[data-btn="${currentButton}"]`);
+            if (btn) btn.classList.add('highlight');
+        }
+
+        let correctPresses = 0;
+        const maxPresses = 6;
+
+        function handleMinigameInput(correct) {
+            if (!isMinigameActive) return;
+
+            if (correct) {
+                correctPresses++;
+                minigameProgress = (correctPresses / maxPresses) * 100;
+                progressFill.style.width = Math.min(100, minigameProgress) + '%';
+
+                if (isMobile) {
+                    nextMobileButton();
+                } else {
+                    minigameKey.classList.add('correct');
+                    setTimeout(() => {
+                        if (isMinigameActive) nextKey();
+                    }, 100);
+                }
+
+                // Проверяем победу (6 правильных нажатий)
+                if (correctPresses >= maxPresses) {
+                    endMinigame(true);
+                }
+            } else {
+                // Неправильное нажатие - просто показываем красный
+                if (!isMobile) {
+                    minigameKey.classList.add('wrong');
+                    setTimeout(() => {
+                        minigameKey.classList.remove('wrong');
+                    }, 200);
+                }
+            }
+        }
+
+        function endMinigame(success) {
+            clearInterval(minigameInterval);
+            isMinigameActive = false;
+            minigame.classList.remove('active');
+            hint.style.display = 'block';
+
+            // Убираем подсветку
+            document.querySelectorAll('.minigame-mobile-btn').forEach(btn => {
+                btn.classList.remove('highlight');
+            });
+
+            if (success && pendingFish) {
+                // Поймал!
+                if (pendingFish.name === 'Старый ботинок') {
+                    showPopup(pendingFish.emoji, 'Старый ботинок!');
+                    socket.emit('caught', { fish: pendingFish, fishCount: stats.fishCount, totalWeight: stats.totalWeight });
+                } else {
+                    stats.fishCount++;
+                    stats.totalWeight += pendingFish.weight;
+                    showPopup(pendingFish.emoji, `${pendingFish.name} ${pendingFish.weight} кг`);
+                    updateStats();
+                    socket.emit('caught', { fish: pendingFish, fishCount: stats.fishCount, totalWeight: stats.totalWeight });
+                }
+
+                // Всплеск
+                for (let i = 0; i < 12; i++) {
+                    bubbles.push({
+                        x: bobberX + (Math.random() - 0.5) * 50,
+                        y: bobberY,
+                        size: 3 + Math.random() * 6,
+                        speed: 1.5 + Math.random() * 2,
+                        opacity: 0.8
+                    });
+                }
+            } else {
+                showPopup('😔', 'Рыба сорвалась!');
+                socket.emit('missed', { reason: 'failed' });
+            }
+
+            isFishing = false;
+            pendingFish = null;
+        }
+
+        // Клавиатура (ПК)
+        document.addEventListener('keydown', (e) => {
+            if (!isMinigameActive || isMobile) return;
+
+            const key = e.key.toUpperCase();
+            if (keys.includes(key)) {
+                minigameKey.classList.add('pressed');
+                setTimeout(() => minigameKey.classList.remove('pressed'), 100);
+
+                handleMinigameInput(key === currentKey);
+            }
+        });
+
+        // Кнопки (мобильные)
+        document.querySelectorAll('.minigame-mobile-btn').forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (!isMinigameActive) return;
+
+                const btnNum = parseInt(btn.dataset.btn);
+                handleMinigameInput(btnNum === currentButton);
+            });
+
+            btn.addEventListener('click', (e) => {
+                if (!isMinigameActive || isMobile) return;
+
+                const btnNum = parseInt(btn.dataset.btn);
+                handleMinigameInput(btnNum === currentButton);
+            });
+        });
+
+        // ========== ЗАБРОС УДОЧКИ ==========
+
+        function cast(x, y) {
+            if (isFishing || isMinigameActive) return;
+
+            isFishing = true;
+            bobberX = x;
+            bobberY = y;
+
+            socket.emit('cast', { x, y });
+
+            // Всплеск
+            for (let i = 0; i < 8; i++) {
+                bubbles.push({
+                    x: x + (Math.random() - 0.5) * 40,
+                    y: y,
+                    size: 3 + Math.random() * 5,
+                    speed: 1 + Math.random() * 2,
+                    opacity: 0.7
+                });
+            }
+
+            // Ждём клёва
+            const waitTime = 2000 + Math.random() * 3000;
+            setTimeout(() => {
+                if (!isFishing) return;
+
+                const fish = selectFish();
+
+                if (fish) {
+                    // Запускаем мини-игру
+                    startMinigame(fish);
+                } else {
+                    showPopup('🤷', 'Не клюёт...');
+                    isFishing = false;
+                    socket.emit('missed', { reason: 'no_bite' });
+                }
+            }, waitTime);
+        }
+
+        // Клик по canvas
+        canvas.addEventListener('click', (e) => {
+            if (!myPlayer || isMinigameActive) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (y < 80) return;
+            cast(x, y);
+        });
+
+        // Тач для мобильных
+        canvas.addEventListener('touchstart', (e) => {
+            if (!myPlayer || isMinigameActive) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+
+            if (y < 80) return;
+            cast(x, y);
+        });
+
+        // ========== SOCKET СОБЫТИЯ ==========
+
+        socket.on('joined', (data) => {
+            myPlayer = data.player;
+            data.players.forEach(p => players.set(p.id, p));
+            updatePlayersList();
+            updateLeaderboard(data.leaderboard);
+        });
+
+        socket.on('playerJoined', (player) => {
+            players.set(player.id, player);
+            updatePlayersList();
+            addFeedItem(`${player.name} присоединился 🎣`);
+        });
+
+        socket.on('playerLeft', (id) => {
+            const player = players.get(id);
+            if (player) {
+                addFeedItem(`${player.name} ушёл`);
+                players.delete(id);
+                updatePlayersList();
+            }
+        });
+
+        socket.on('playerCast', (data) => {
+            const player = players.get(data.id);
+            if (player) {
+                player.x = data.x;
+                player.y = data.y;
+                player.isFishing = true;
+            }
+        });
+
+        socket.on('playerPulling', (data) => {
+            if (data.id !== socket.id) {
+                addFeedItem(`${data.name} тянет рыбу! 🎣`);
+            }
+        });
+
+        socket.on('playerCaught', (data) => {
+            const player = players.get(data.id);
+            if (player) {
+                player.isFishing = false;
+                player.fishCount = data.fishCount;
+                player.totalWeight = data.totalWeight;
+                updatePlayersList();
+
+                if (data.id !== socket.id && data.fish.name !== 'Старый ботинок') {
+                    addFeedItem(`${data.name} поймал ${data.fish.emoji} ${data.fish.name} ${data.fish.weight} кг!`);
+                }
+            }
+        });
+
+        socket.on('playerMissed', (data) => {
+            const player = players.get(data.id);
+            if (player) {
+                player.isFishing = false;
+                if (data.id !== socket.id && data.reason === 'failed') {
+                    addFeedItem(`У ${data.name} сорвалась рыба 😔`);
+                }
+            }
+        });
+
+        socket.on('leaderboardUpdate', (leaderboard) => {
+            updateLeaderboard(leaderboard);
+        });
+
+        // ========== ЗАПУСК ==========
+
+        playBtn.addEventListener('click', () => {
+            const name = playerNameInput.value.trim() || 'Рыбак';
+            socket.emit('join', name);
+
+            menu.classList.add('hidden');
+            game.classList.add('active');
+
+            addFishToWater();
+            draw();
+        });
+
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') playBtn.click();
+        });
+
+        playerNameInput.focus();
+    </script>
+</body>
+</html>

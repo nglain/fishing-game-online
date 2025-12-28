@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рыбалка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #87CEEB 0%, #4682B4 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        .game-container {
+            background: linear-gradient(180deg, #1a5276 0%, #154360 50%, #0e2f44 100%);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #pond {
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 18px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        #castBtn {
+            background: linear-gradient(180deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
+        }
+
+        #castBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(243, 156, 18, 0.6);
+        }
+
+        #castBtn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .stats {
+            margin-top: 20px;
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.1);
+            padding: 15px 25px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+        }
+
+        .stat-box h3 {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .stat-box p {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .catch-list {
+            margin-top: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            color: white;
+        }
+
+        .catch-list h3 {
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .catch-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-size: 20px;
+            display: none;
+            z-index: 10;
+            text-align: center;
+        }
+
+        .message.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <h1>🎣 Рыбалка</h1>
+
+    <div class="game-container">
+        <canvas id="pond" width="600" height="400"></canvas>
+        <div class="message" id="message"></div>
+
+        <div class="controls">
+            <button id="castBtn">Забросить удочку</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-box">
+                <h3>Поймано рыб</h3>
+                <p id="fishCount">0</p>
+            </div>
+            <div class="stat-box">
+                <h3>Общий вес</h3>
+                <p id="totalWeight">0 кг</p>
+            </div>
+            <div class="stat-box">
+                <h3>Лучший улов</h3>
+                <p id="bestCatch">-</p>
+            </div>
+        </div>
+
+        <div class="catch-list">
+            <h3>Улов сегодня:</h3>
+            <div id="catches"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('pond');
+        const ctx = canvas.getContext('2d');
+        const castBtn = document.getElementById('castBtn');
+        const message = document.getElementById('message');
+        const fishCountEl = document.getElementById('fishCount');
+        const totalWeightEl = document.getElementById('totalWeight');
+        const bestCatchEl = document.getElementById('bestCatch');
+        const catchesEl = document.getElementById('catches');
+
+        // Виды рыб
+        const fishTypes = [
+            { name: 'Карась', emoji: '🐟', minWeight: 0.1, maxWeight: 0.5, rarity: 0.35 },
+            { name: 'Окунь', emoji: '🐠', minWeight: 0.2, maxWeight: 0.8, rarity: 0.25 },
+            { name: 'Щука', emoji: '🐡', minWeight: 0.5, maxWeight: 3.0, rarity: 0.15 },
+            { name: 'Сом', emoji: '🐋', minWeight: 2.0, maxWeight: 10.0, rarity: 0.08 },
+            { name: 'Лещ', emoji: '🐟', minWeight: 0.3, maxWeight: 1.5, rarity: 0.12 },
+            { name: 'Золотая рыбка', emoji: '✨', minWeight: 0.1, maxWeight: 0.2, rarity: 0.03 },
+            { name: 'Старый ботинок', emoji: '👢', minWeight: 0.5, maxWeight: 0.5, rarity: 0.02 }
+        ];
+
+        let stats = {
+            fishCount: 0,
+            totalWeight: 0,
+            bestCatch: null,
+            catches: []
+        };
+
+        let isFishing = false;
+        let bobberX = 0;
+        let bobberY = 0;
+        let waves = [];
+        let bubbles = [];
+        let fishInWater = [];
+
+        // Инициализация волн
+        for (let i = 0; i < 5; i++) {
+            waves.push({ offset: Math.random() * Math.PI * 2, speed: 0.02 + Math.random() * 0.02 });
+        }
+
+        // Функция отрисовки пруда
+        function drawPond() {
+            // Фон воды
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#1a5276');
+            gradient.addColorStop(0.5, '#154360');
+            gradient.addColorStop(1, '#0e2f44');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Волны
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 2;
+
+            waves.forEach((wave, i) => {
+                ctx.beginPath();
+                const y = 50 + i * 80;
+                for (let x = 0; x < canvas.width; x += 5) {
+                    const waveY = y + Math.sin(x * 0.02 + wave.offset) * 10;
+                    if (x === 0) ctx.moveTo(x, waveY);
+                    else ctx.lineTo(x, waveY);
+                }
+                ctx.stroke();
+                wave.offset += wave.speed;
+            });
+
+            // Пузырьки
+            bubbles.forEach((bubble, i) => {
+                ctx.beginPath();
+                ctx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255,255,255,${bubble.opacity})`;
+                ctx.fill();
+
+                bubble.y -= bubble.speed;
+                bubble.opacity -= 0.005;
+
+                if (bubble.opacity <= 0) {
+                    bubbles.splice(i, 1);
+                }
+            });
+
+            // Рыбы в воде
+            fishInWater.forEach((fish, i) => {
+                ctx.font = `${fish.size}px Arial`;
+                ctx.fillText(fish.emoji, fish.x, fish.y);
+
+                fish.x += fish.speedX;
+                if (fish.x > canvas.width + 50 || fish.x < -50) {
+                    fish.speedX *= -1;
+                }
+            });
+
+            // Поплавок
+            if (isFishing) {
+                // Леска
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(canvas.width - 50, 0);
+                ctx.lineTo(bobberX, bobberY);
+                ctx.stroke();
+
+                // Поплавок
+                const bobY = bobberY + Math.sin(Date.now() * 0.005) * 3;
+
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                ctx.ellipse(bobberX, bobY, 8, 12, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.ellipse(bobberX, bobY - 8, 5, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Иногда добавляем пузырьки
+                if (Math.random() < 0.05) {
+                    bubbles.push({
+                        x: bobberX + (Math.random() - 0.5) * 30,
+                        y: bobberY + 20,
+                        size: 2 + Math.random() * 4,
+                        speed: 0.5 + Math.random(),
+                        opacity: 0.6
+                    });
+                }
+            }
+
+            requestAnimationFrame(drawPond);
+        }
+
+        // Добавляем рыб в пруд
+        function addFishToWater() {
+            for (let i = 0; i < 5; i++) {
+                fishInWater.push({
+                    x: Math.random() * canvas.width,
+                    y: 100 + Math.random() * 250,
+                    emoji: ['🐟', '🐠'][Math.floor(Math.random() * 2)],
+                    size: 15 + Math.random() * 15,
+                    speedX: (Math.random() - 0.5) * 2
+                });
+            }
+        }
+
+        // Выбор рыбы по вероятности
+        function catchFish() {
+            const rand = Math.random();
+            let cumulative = 0;
+
+            // 20% шанс ничего не поймать
+            if (rand < 0.2) return null;
+
+            const adjustedRand = (rand - 0.2) / 0.8;
+
+            for (const fish of fishTypes) {
+                cumulative += fish.rarity;
+                if (adjustedRand < cumulative) {
+                    const weight = fish.minWeight + Math.random() * (fish.maxWeight - fish.minWeight);
+                    return {
+                        ...fish,
+                        weight: Math.round(weight * 100) / 100
+                    };
+                }
+            }
+
+            return fishTypes[0];
+        }
+
+        // Показать сообщение
+        function showMessage(text, duration = 2000) {
+            message.textContent = text;
+            message.classList.add('show');
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, duration);
+        }
+
+        // Обновить статистику
+        function updateStats() {
+            fishCountEl.textContent = stats.fishCount;
+            totalWeightEl.textContent = stats.totalWeight.toFixed(1) + ' кг';
+
+            if (stats.bestCatch) {
+                bestCatchEl.textContent = `${stats.bestCatch.emoji} ${stats.bestCatch.weight} кг`;
+            }
+
+            catchesEl.innerHTML = stats.catches.slice(-5).reverse().map(c => `
+                <div class="catch-item">
+                    <span>${c.emoji} ${c.name}</span>
+                    <span>${c.weight} кг</span>
+                </div>
+            `).join('');
+        }
+
+        // Забросить удочку
+        function cast() {
+            if (isFishing) return;
+
+            isFishing = true;
+            castBtn.disabled = true;
+            castBtn.textContent = 'Ждём клёва...';
+
+            bobberX = 100 + Math.random() * 400;
+            bobberY = 100 + Math.random() * 200;
+
+            showMessage('Удочка заброшена! 🎣');
+
+            // Случайное время ожидания
+            const waitTime = 2000 + Math.random() * 3000;
+
+            setTimeout(() => {
+                const fish = catchFish();
+
+                if (fish) {
+                    if (fish.name === 'Старый ботинок') {
+                        showMessage(`${fish.emoji} Вы поймали старый ботинок!`, 2500);
+                    } else {
+                        showMessage(`${fish.emoji} ${fish.name}! ${fish.weight} кг`, 2500);
+
+                        stats.fishCount++;
+                        stats.totalWeight += fish.weight;
+                        stats.catches.push(fish);
+
+                        if (!stats.bestCatch || fish.weight > stats.bestCatch.weight) {
+                            stats.bestCatch = fish;
+                        }
+
+                        updateStats();
+                    }
+
+                    // Всплеск пузырьков
+                    for (let i = 0; i < 10; i++) {
+                        bubbles.push({
+                            x: bobberX + (Math.random() - 0.5) * 50,
+                            y: bobberY,
+                            size: 3 + Math.random() * 5,
+                            speed: 1 + Math.random() * 2,
+                            opacity: 0.8
+                        });
+                    }
+                } else {
+                    showMessage('Рыба сорвалась! 😔', 2000);
+                }
+
+                isFishing = false;
+                castBtn.disabled = false;
+                castBtn.textContent = 'Забросить удочку';
+            }, waitTime);
+        }
+
+        // События
+        castBtn.addEventListener('click', cast);
+        canvas.addEventListener('click', cast);
+
+        // Запуск
+        addFishToWater();
+        drawPond();
+    </script>
+</body>
+</html>
