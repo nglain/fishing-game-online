@@ -897,7 +897,11 @@
         });
 
         function cast(x, y) {
-            if (isFishing || isMinigameActive || !gameActive) return;
+            if (isFishing || isMinigameActive) return;
+            if (!gameActive) {
+                showPopup('⏳', 'Ждём начала раунда...');
+                return;
+            }
 
             isFishing = true;
             bobberX = x;
@@ -931,7 +935,9 @@
         canvas.addEventListener('click', (e) => {
             if (!myPlayer || isMinigameActive) return;
             const rect = canvas.getBoundingClientRect();
-            cast(e.clientX - rect.left, e.clientY - rect.top);
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            if (y > 60) cast(x, y);
         });
 
         canvas.addEventListener('touchstart', (e) => {
@@ -939,8 +945,11 @@
             e.preventDefault();
             const touch = e.touches[0];
             const rect = canvas.getBoundingClientRect();
-            cast(touch.clientX - rect.left, touch.clientY - rect.top);
-        });
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            console.log('Touch:', x, y, 'gameActive:', gameActive);
+            if (y > 60) cast(x, y);
+        }, { passive: false });
 
         // Socket события
         socket.on('joined', (data) => {
