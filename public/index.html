@@ -550,12 +550,16 @@
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 601;
 
         const fishTypes = [
-            { name: 'Карась', emoji: '🐟', minWeight: 0.1, maxWeight: 0.5, rarity: 0.35, difficulty: 3 },
-            { name: 'Окунь', emoji: '🐠', minWeight: 0.2, maxWeight: 0.8, rarity: 0.25, difficulty: 4 },
-            { name: 'Щука', emoji: '🐡', minWeight: 0.5, maxWeight: 3.0, rarity: 0.15, difficulty: 6 },
-            { name: 'Сом', emoji: '🐋', minWeight: 2.0, maxWeight: 10.0, rarity: 0.08, difficulty: 8 },
-            { name: 'Лещ', emoji: '🐟', minWeight: 0.3, maxWeight: 1.5, rarity: 0.12, difficulty: 5 },
-            { name: 'Золотая рыбка', emoji: '✨', minWeight: 0.1, maxWeight: 0.2, rarity: 0.03, difficulty: 10 },
+            { name: 'Карась', emoji: '🐟', minWeight: 0.1, maxWeight: 0.5, rarity: 0.28, difficulty: 3 },
+            { name: 'Окунь', emoji: '🐠', minWeight: 0.2, maxWeight: 0.8, rarity: 0.20, difficulty: 4 },
+            { name: 'Щука', emoji: '🐡', minWeight: 0.5, maxWeight: 3.0, rarity: 0.12, difficulty: 6 },
+            { name: 'Сом', emoji: '🐋', minWeight: 2.0, maxWeight: 10.0, rarity: 0.06, difficulty: 8 },
+            { name: 'Лещ', emoji: '🐟', minWeight: 0.3, maxWeight: 1.5, rarity: 0.10, difficulty: 5 },
+            { name: 'Золотая рыбка', emoji: '✨', minWeight: 0.1, maxWeight: 0.2, rarity: 0.02, difficulty: 10 },
+            { name: 'Новогодняя рыба', emoji: '🎄', minWeight: 1.0, maxWeight: 5.0, rarity: 0.08, difficulty: 7 },
+            { name: 'Снежная рыба', emoji: '❄️', minWeight: 0.5, maxWeight: 2.0, rarity: 0.06, difficulty: 6 },
+            { name: 'Дед Мороз', emoji: '🎅', minWeight: 3.0, maxWeight: 8.0, rarity: 0.04, difficulty: 9 },
+            { name: 'Подарок', emoji: '🎁', minWeight: 0.2, maxWeight: 1.0, rarity: 0.02, difficulty: 5 },
             { name: 'Старый ботинок', emoji: '👢', minWeight: 0.5, maxWeight: 0.5, rarity: 0.02, difficulty: 1 }
         ];
 
@@ -584,6 +588,94 @@
             }
         }
 
+        // Снежинки
+        let snowflakes = [];
+        for (let i = 0; i < 50; i++) {
+            snowflakes.push({
+                x: Math.random() * 2000,
+                y: Math.random() * 1000,
+                size: 2 + Math.random() * 4,
+                speed: 0.3 + Math.random() * 0.5,
+                drift: Math.random() * 0.5 - 0.25
+            });
+        }
+
+        function drawSnowflakes() {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            snowflakes.forEach(flake => {
+                ctx.beginPath();
+                ctx.arc(flake.x, flake.y, flake.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                flake.y += flake.speed;
+                flake.x += flake.drift + Math.sin(Date.now() * 0.001 + flake.x) * 0.3;
+
+                if (flake.y > canvas.height) {
+                    flake.y = -10;
+                    flake.x = Math.random() * canvas.width;
+                }
+                if (flake.x > canvas.width) flake.x = 0;
+                if (flake.x < 0) flake.x = canvas.width;
+            });
+        }
+
+        function drawUnderwaterTree(x, baseY) {
+            // Ствол
+            ctx.fillStyle = '#5D4037';
+            ctx.fillRect(x - 8, baseY - 20, 16, 30);
+
+            // Ёлка (3 яруса)
+            ctx.fillStyle = '#1B5E20';
+
+            // Нижний ярус
+            ctx.beginPath();
+            ctx.moveTo(x - 50, baseY - 20);
+            ctx.lineTo(x + 50, baseY - 20);
+            ctx.lineTo(x, baseY - 80);
+            ctx.closePath();
+            ctx.fill();
+
+            // Средний ярус
+            ctx.beginPath();
+            ctx.moveTo(x - 40, baseY - 60);
+            ctx.lineTo(x + 40, baseY - 60);
+            ctx.lineTo(x, baseY - 110);
+            ctx.closePath();
+            ctx.fill();
+
+            // Верхний ярус
+            ctx.beginPath();
+            ctx.moveTo(x - 25, baseY - 95);
+            ctx.lineTo(x + 25, baseY - 95);
+            ctx.lineTo(x, baseY - 135);
+            ctx.closePath();
+            ctx.fill();
+
+            // Звезда на верхушке
+            ctx.fillStyle = '#FFD700';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('⭐', x, baseY - 135);
+
+            // Гирлянды (мигающие шарики)
+            const colors = ['#e74c3c', '#f1c40f', '#3498db', '#9b59b6', '#2ecc71'];
+            const time = Date.now() * 0.003;
+
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2 + time;
+                const radius = 25 + (i % 3) * 15;
+                const ballX = x + Math.cos(angle) * radius * 0.8;
+                const ballY = baseY - 50 - (i % 3) * 30 + Math.sin(angle) * 5;
+
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.globalAlpha = 0.7 + Math.sin(time + i) * 0.3;
+                ctx.beginPath();
+                ctx.arc(ballX, ballY, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        }
+
         function draw() {
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
             gradient.addColorStop(0, '#1a5276');
@@ -604,6 +696,13 @@
                 ctx.stroke();
                 wave.offset += wave.speed;
             });
+
+            // Новогодняя ёлка под водой
+            drawUnderwaterTree(canvas.width * 0.15, canvas.height - 50);
+            drawUnderwaterTree(canvas.width * 0.85, canvas.height - 30);
+
+            // Снежинки
+            drawSnowflakes();
 
             fishInWater.forEach(fish => {
                 ctx.font = `${fish.size}px Arial`;
