@@ -549,7 +549,21 @@
 
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 601;
 
-        const fishTypes = [
+        // Проверка новогоднего периода (до 19 января)
+        const now = new Date();
+        const isNewYear = (now.getMonth() === 11) || (now.getMonth() === 0 && now.getDate() <= 19);
+
+        const baseFishTypes = [
+            { name: 'Карась', emoji: '🐟', minWeight: 0.1, maxWeight: 0.5, rarity: 0.30, difficulty: 3 },
+            { name: 'Окунь', emoji: '🐠', minWeight: 0.2, maxWeight: 0.8, rarity: 0.25, difficulty: 4 },
+            { name: 'Щука', emoji: '🐡', minWeight: 0.5, maxWeight: 3.0, rarity: 0.15, difficulty: 6 },
+            { name: 'Сом', emoji: '🐋', minWeight: 2.0, maxWeight: 10.0, rarity: 0.08, difficulty: 8 },
+            { name: 'Лещ', emoji: '🐟', minWeight: 0.3, maxWeight: 1.5, rarity: 0.12, difficulty: 5 },
+            { name: 'Золотая рыбка', emoji: '✨', minWeight: 0.1, maxWeight: 0.2, rarity: 0.03, difficulty: 10 },
+            { name: 'Старый ботинок', emoji: '👢', minWeight: 0.5, maxWeight: 0.5, rarity: 0.07, difficulty: 1 }
+        ];
+
+        const newYearFishTypes = [
             { name: 'Карась', emoji: '🐟', minWeight: 0.1, maxWeight: 0.5, rarity: 0.28, difficulty: 3 },
             { name: 'Окунь', emoji: '🐠', minWeight: 0.2, maxWeight: 0.8, rarity: 0.20, difficulty: 4 },
             { name: 'Щука', emoji: '🐡', minWeight: 0.5, maxWeight: 3.0, rarity: 0.12, difficulty: 6 },
@@ -562,6 +576,8 @@
             { name: 'Подарок', emoji: '🎁', minWeight: 0.2, maxWeight: 1.0, rarity: 0.02, difficulty: 5 },
             { name: 'Старый ботинок', emoji: '👢', minWeight: 0.5, maxWeight: 0.5, rarity: 0.02, difficulty: 1 }
         ];
+
+        const fishTypes = isNewYear ? newYearFishTypes : baseFishTypes;
 
         let stats = { fishCount: 0, totalWeight: 0, roundFish: 0, roundWeight: 0 };
 
@@ -588,16 +604,18 @@
             }
         }
 
-        // Снежинки
+        // Снежинки (только в новогодний период)
         let snowflakes = [];
-        for (let i = 0; i < 50; i++) {
-            snowflakes.push({
-                x: Math.random() * 2000,
-                y: Math.random() * 1000,
-                size: 2 + Math.random() * 4,
-                speed: 0.3 + Math.random() * 0.5,
-                drift: Math.random() * 0.5 - 0.25
-            });
+        if (isNewYear) {
+            for (let i = 0; i < 50; i++) {
+                snowflakes.push({
+                    x: Math.random() * 2000,
+                    y: Math.random() * 1000,
+                    size: 2 + Math.random() * 4,
+                    speed: 0.3 + Math.random() * 0.5,
+                    drift: Math.random() * 0.5 - 0.25
+                });
+            }
         }
 
         function drawSnowflakes() {
@@ -697,12 +715,12 @@
                 wave.offset += wave.speed;
             });
 
-            // Новогодняя ёлка под водой
-            drawUnderwaterTree(canvas.width * 0.15, canvas.height - 50);
-            drawUnderwaterTree(canvas.width * 0.85, canvas.height - 30);
-
-            // Снежинки
-            drawSnowflakes();
+            // Новогодние декорации (только до 19 января)
+            if (isNewYear) {
+                drawUnderwaterTree(canvas.width * 0.15, canvas.height - 50);
+                drawUnderwaterTree(canvas.width * 0.85, canvas.height - 30);
+                drawSnowflakes();
+            }
 
             fishInWater.forEach(fish => {
                 ctx.font = `${fish.size}px Arial`;
